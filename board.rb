@@ -2,7 +2,6 @@ require_relative 'pieces'
 
 class Board
   attr_reader :data
-
   def initialize(setup = true)
     @data = Array.new(8) { Array.new(8) }
     reset_pieces if setup
@@ -20,14 +19,11 @@ class Board
     @data[row][col] = piece
   end
 
-  def load_FEM(input)
-    # input.split("").each do
-  end
-
   def self.on_board?(pos)
     (0..7).include?(pos[0]) && (0..7).include?(pos[1]) # return true if position lies in range 0..7
   end
 
+  # return true if the input color is in check
   def in_check?(color)
     other_color = color == :white ? :black : :white
     enemy_pieces = get_pieces(other_color)          # get pieces of the opposite color
@@ -37,6 +33,7 @@ class Board
     end
   end
 
+  # return true if the input color is in checkmate
   def in_checkmate?(color)
     pieces = get_pieces(color)                      # get pieces of color
     pieces.all? { |piece| piece.valid_moves.none? } # return true if all pieces have no valid moves
@@ -135,24 +132,6 @@ class Board
   end
 end
 
-#board = Board.new
+board = Board.new
+#board.load_FEM("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
 #board.print_board
-# 1.upto(10).each do
-#   print board[[0, 1]].symbol
-# end
-# print "\n"
-# 1.upto(10).each do
-#   print board[[0, 6]].symbol
-# end
-
-
-# piece = board.get_pieces(:white, Pawn)[0]
-# puts piece.inspect + " - moves: " + piece.moves.to_s
-
-# valid = piece.moves.select { |move| piece.move_make_check?(move) == false }
-# puts piece.inspect + " - valid moves: " + valid.to_s
-
-# puts "\nAvailable Moves:\n"
-# board.get_pieces(:white).each do |piece|
-# 	puts piece.inspect + " - Available moves: " + piece.valid_moves.to_s
-# end
