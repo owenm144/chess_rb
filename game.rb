@@ -3,123 +3,129 @@ require_relative 'pieces'
 
 class Game
   attr_reader :board
-  def initialize()
-    @board = Board.new(false)
+  def initialize
+    @board = Board.new
     @player_turn = :white
+    @halfmoves = 0
+    @fullmoves = 0
+    @castling = "KQkq"
+    @en_passant = [-1, -1] # when a pawn moves two squares, set this to the position behind them, an enemy pawn can move diagonally to this square
   end
+
+  # begin a new game of chess
   def play
-    puts "Begin Game!"
+    puts "\nBegin Game!"
+    @board.print_data
+
+    # enter main loop
     while true
       take_turn(@player_turn)
+      @board.print_data
+
+      # check if the other player is in checkmate
       other_color = @player_turn == :white ? :black : :white
       if @board.in_checkmate?(other_color)
-        board.print_board
-        puts "#{other_color == :white ? "White" : "Black"} Wins!"
+        end_game(other_color)
       end
-      @player_turn = @player_turn == :white ? :black : :white
+
+      # swap player turn
+      @player_turn = other_color
     end
   end
 
+  # get a player colors turn
   def take_turn(color)
-    @board.print_board
-    print "\nEnter #{ color == :white ? "White's " : "Black's "} Move: "
 
+    # get a legal move and move a piece
     from, to = get_move(color)
     @board.move_piece(from, to)
-    puts "#{ color == :white ? "White " : "Black "} moves from #{from} to #{to}"
-  end
-
-  def input_to_coord(input)
-    letter_num = {
-      "a" => 0,
-      "b" => 1,
-      "c" => 2,
-      "d" => 3,
-      "e" => 4,
-      "f" => 5,
-      "g" => 6,
-      "h" => 7
-    }
-    return [letter_num[input[0]], input[1].to_i - 1]
-  end
-
-  def get_move(color)
-    while true do
-      input = gets.chomp
-      exit if input == "exit"
+    puts "#{color == :white ? "White" : "Black"} moves #{@board[to].class.to_s} from #{index_to_an(from)} to #{index_to_an(to)}", ""
   
-      from = input_to_coord([input[0], input[1]])
-      to = input_to_coord([input[-2], input[-1]])
-      puts "Move piece from #{from} to #{to}"
-      if Board.on_board?(from) && Board.on_board?(to)
-        if @board[from].nil? == false && @board[from].color == color && @board[from].valid_moves.include?(to)
-          break
-        end
-      end
-      puts "input invalid"
-    end
-    return [from, to]
+    # increment halfmove and fullmove counters
+    @halfmoves += 1
+    @fullmoves += 1 if @halfmoves % 2 == 0
   end
 
-  def load_FEM(input)
-    fields = input.split(" ") # get the six fields of the FEM code
+  # get user input and verify the move is legal
+  def get_move(color)
 
-    # load board state using first field
-    x_index = 0
-    y_index = 7
-    pieces = []
+    while true do
+      print "\nEnter #{color == :white ? "White" : "Black"}'s Move: "
+      input = gets.chomp
+      
+      # stop program if input is an exit command
+      exit if %w[exit quit stop q].include?(input)
 
-    fields[0].split("").each do |char|
-      case char.ord
-        when (48..57) # 0..9
-          x_index += char.ord - 48
-          next
-        when 47 # "/"
-          x_index = 0
-          y_index -= 1
-          next
-        when 80 # "P"
-          pieces.push(Pawn.new(self, [x_index, y_index], :white))
-        when 112 # "p"
-          pieces.push(Pawn.new(self, [x_index, y_index], :black))
-        when 82 # "R"
-          pieces.push(Rook.new(self, [x_index, y_index], :white))
-        when 114 # "r"
-          pieces.push(Rook.new(self, [x_index, y_index], :black))
-        when 78 # "N"
-          pieces.push(Knight.new(self, [x_index, y_index], :white))
-        when 110 # "n"
-          pieces.push(Knight.new(self, [x_index, y_index], :black))
-        when 66 # "B"
-          pieces.push(Bishop.new(self, [x_index, y_index], :white))
-        when 98 # "b"
-          pieces.push(Bishop.new(self, [x_index, y_index], :black))
-        when 81 # "Q"
-          pieces.push(Queen.new(self, [x_index, y_index], :white))
-        when 113 # "q"
-          pieces.push(Queen.new(self, [x_index, y_index], :black))
-        when 75 # "K"
-          pieces.push(King.new(self, [x_index, y_index], :white))
-        when 107 # "k"
-          pieces.push(King.new(self, [x_index, y_index], :black))
+      # output error message if input was too short
+      if input.length < 4
+        puts "Input Error: input.length was < 4"
+        next
       end
-      x_index += 1
+
+      # convert input from algebraic notation to board indices
+      from = an_to_index([input[0], input[1]])
+      to = an_to_index([input[-2], input[-1]])
+
+      # return move if valid, or output error message
+      validity = @board.query_move(color, from, to)
+      if validity == "valid"
+        break
+      else
+        puts validity
+      end
     end
-    pieces.each do |piece| # add each piece to the board
-      index = piece.pos
-      puts "Index: #{index}"
-      @board[index] = piece
+    
+    [from, to]
+  end
+
+  # display end of game text
+  def end_game(color)
+    
+    puts "\n#{color == :white ? "White" : "Black"} Wins!"
+
+    while true
+      puts "Play again? (y/n):"
+      input = gets.chomp
+      if input == "y"
+        load_game_state("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+        self.play
+      elsif input == "n"
+        exit
+      else
+        puts "Command not recognised"
+      end
     end
+  end
+
+  # load a game state using FEN-notation
+  def load_game_state(input)
+
+    # get the six fields of the FEN code
+    fields = input.split(' ')
+
+    # set the board state
+    board.set_data(fields[0])
 
     # set current player turn
     @player_turn = :white if fields[1] == "w"
     @player_turn = :black if fields[1] == "b"
 
+    # TODO: add other game state variables ie castling possibility
+    @castling = fields[2]
 
   end
 end
 
-# start = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+def an_to_index(input)
+  x = (input[0].ord - 49).chr.to_i
+  y = input[1].to_i - 1
+  [x, y]
+end
+def index_to_an(input)
+  x = (input[0].to_s.ord + 49).chr
+  y = input[1] + 1
+  "#{x}#{y}"
+end
+
 game = Game.new
-game.load_FEM("8/8/8/4p1K1/2k1P3/8/8/8 b - - 0 1")
 game.play

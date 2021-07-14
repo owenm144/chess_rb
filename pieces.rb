@@ -26,41 +26,45 @@ class Piece
 
   # fill the move array with all valid moves in 
   def fill_steps(steps)
+
     @moves = []
-    steps.each do |step| # for each step
-        # add if space is on the board, and empty or contains a piece of the opposite color
-        new_pos = pos[0] + step[0], pos[1] + step[1]
-        @moves << new_pos if Board.on_board?(new_pos) && (board[new_pos].nil? || board[new_pos].color != self.color)
+    steps.each do |step|
+
+      # add if space is on the board, and empty or contains a piece of the opposite color
+      new_pos = pos[0] + step[0], pos[1] + step[1]
+      @moves << new_pos if Board.on_board?(new_pos) && (board[new_pos].nil? || board[new_pos].color != self.color)
     end
+
     return @moves
   end
 
   # fill the move array with all valid moves in any number of spaces in input directions
   def fill_slides(directions)
+
     @moves = []
-    directions.each do |dir| # for each direction
+    directions.each do |dir|
 
       # get next space in direction
       new_pos = pos[0] + dir[0], pos[1] + dir[1]
-      while Board.on_board?(new_pos) # if space is on the board
+      while Board.on_board?(new_pos)
 
-        if board[new_pos].nil? # if space is empty
-          # add space
+        # add space if empty, or contains a piece of opposite color
+        if board[new_pos].nil?
           @moves << new_pos
-        else # if space contains a piece
-          # add space if piece is opposite color
+        else
           @moves << new_pos if board[new_pos].color != self.color
-          break	# go to next direction
+          break
         end
 
         # go to next space in direction
         new_pos = new_pos[0] + dir[0], new_pos[1] + dir[1]
       end
     end
+
     return @moves
   end
 end
-  
+
 class Pawn < Piece
   attr_accessor :has_moved
   def initialize(board, pos, color)

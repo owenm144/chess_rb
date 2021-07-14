@@ -2,92 +2,149 @@ require_relative 'pieces'
 
 class Board
   attr_reader :data
-  def initialize(setup = true)
+  def initialize(set = true)
     @data = Array.new(8) { Array.new(8) }
-    reset_pieces if setup
+    reset if set
   end
 
-  # getter for data array
+  # get and set data
   def [](pos)
     row, col = pos
     @data[row][col]
   end
-
-  # setter for data array
   def []=(pos, piece)
     row, col = pos
     @data[row][col] = piece
   end
 
+  # return true if the position is within range 0..7
   def self.on_board?(pos)
-    (0..7).include?(pos[0]) && (0..7).include?(pos[1]) # return true if position lies in range 0..7
+    (0..7).include?(pos[0]) && (0..7).include?(pos[1])
+  end
+
+  # return an array containing pieces of input color and type
+  def get_pieces(color, type = Piece)
+    pieces = @data.flatten.compact.select do |piece|
+      piece.color == color && piece.is_a?(type)
+    end
+  end
+
+  # clear the board
+  def clear_data
+    @data.each do |x|
+      x.clear
+    end
+  end
+
+  # reset the board to the initial state
+  def reset
+    set_data("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR")
   end
 
   # return true if the input color is in check
   def in_check?(color)
     other_color = color == :white ? :black : :white
-    enemy_pieces = get_pieces(other_color)          # get pieces of the opposite color
-    king_pos = get_pieces(color, King)[0].pos       # get king position
-    enemy_pieces.any? do |piece|                    # return true if any enemy pieces can move to king position
-      piece.moves.include?(king_pos)
-    end
+    enemy_pieces = get_pieces(other_color)
+    king_pos = get_pieces(color, King)[0].pos
+    enemy_pieces.any? { |piece| piece.moves.include?(king_pos) }
   end
 
   # return true if the input color is in checkmate
   def in_checkmate?(color)
-    pieces = get_pieces(color)                      # get pieces of color
-    pieces.all? { |piece| piece.valid_moves.none? } # return true if all pieces have no valid moves
+    pieces = get_pieces(color)
+    pieces.all? { |piece| piece.valid_moves.none? }
   end
 
-  def reset_pieces
-    pieces = [ # create pieces
-      Rook.new(self,   [0, 0], :white), # 7 [♖] [♘] [♗] [♕] [♔] [♗] [♘] [♖]
-      Knight.new(self, [1, 0], :white), # 6 [♙] [♙] [♙] [♙] [♙] [♙] [♙] [♙]
-      Bishop.new(self, [2, 0], :white), # 5 [  ] [  ] [  ] [ ] [ ] [  ] [  ] [  ]
-      Queen.new(self,  [3, 0], :white), # 4 [  ] [  ] [  ] [ ] [ ] [  ] [  ] [  ]
-      King.new(self,   [4, 0], :white), # 3 [  ] [  ] [  ] [ ] [ ] [  ] [  ] [  ]
-      Bishop.new(self, [5, 0], :white), # 2 [  ] [  ] [  ] [ ] [ ] [  ] [  ] [  ]->[7, 2]
-      Knight.new(self, [6, 0], :white), # 1 [♟︎] [♟︎] [♟︎] [♟︎] [♟︎] [♟︎] [♟︎] [♟︎]
-      Rook.new(self,   [7, 0], :white), # 0 [♜] [♞] [♝] [♛] [♚] [♝] [♞] [♜]
-      Rook.new(self,   [0, 7], :black), #    0    1    2    3   4    5    6    7
-      Knight.new(self, [1, 7], :black),
-      Bishop.new(self, [2, 7], :black),
-      Queen.new(self,  [3, 7], :black),
-      King.new(self,   [4, 7], :black),
-      Bishop.new(self, [5, 7], :black),
-      Knight.new(self, [6, 7], :black),
-      Rook.new(self,   [7, 7], :black)
-    ]
+  # set the board state data using an FEN string
+  def set_data(input)
 
-    (0..7).each do |index| # create pawns
-      pieces.push(Pawn.new(self, [index, 1], :white))
-      pieces.push(Pawn.new(self, [index, 6], :black))
+    # clear existing data and process each character in the string
+    self.clear_data
+    pieces = []
+    x_index, y_index = 0, 7
+    input = input.split(' ')[0]
+    input.split('').each do |char|
+
+      # char ascii value in range 0..9
+      if (48..57).include?(char.ord)
+        x_index += char.ord - 48
+        next
+      else
+        case char
+          when "/"
+            x_index = 0
+            y_index -= 1
+            next
+          when "P"
+            pieces.push(Pawn.new(self, [x_index, y_index], :white))
+          when "p"
+            pieces.push(Pawn.new(self, [x_index, y_index], :black))
+          when "R"
+            pieces.push(Rook.new(self, [x_index, y_index], :white))
+          when "r"
+            pieces.push(Rook.new(self, [x_index, y_index], :black))
+          when "N"
+            pieces.push(Knight.new(self, [x_index, y_index], :white))
+          when "n"
+            pieces.push(Knight.new(self, [x_index, y_index], :black))
+          when "B"
+            pieces.push(Bishop.new(self, [x_index, y_index], :white))
+          when "b"
+            pieces.push(Bishop.new(self, [x_index, y_index], :black))
+          when "Q"
+            pieces.push(Queen.new(self, [x_index, y_index], :white))
+          when "q"
+            pieces.push(Queen.new(self, [x_index, y_index], :black))
+          when "K"
+            pieces.push(King.new(self, [x_index, y_index], :white))
+          when "k"
+            pieces.push(King.new(self, [x_index, y_index], :black))
+        end
+        x_index += 1
+      end
     end
 
-    pieces.each do |piece| # add each piece to the board
+    # add each piece to the board
+    pieces.each do |piece|
       index = piece.pos
       self[index] = piece
     end
   end
 
-  # return an array containing all pieces of input color and type
-  def get_pieces(color, type = Piece)
-    pieces = data.flatten.compact.select do |piece|
-      piece.color == color
-    end
-    pieces.select { |piece| piece.is_a?(type) } if type != Piece.class # select pieces of input type
-  end
-
-  # move the piece at the from position to the to position
+  # move a piece from one position to another
   def move_piece(from, to)
-    piece = self[from] # get piece at position
-    piece.pos = to # move piece to new position
+    piece = self[from]
+    return if piece.nil?
+
+    piece.pos = to
     self[to] = piece
     self[from] = nil
-    true
   end
 
-  def print_board
+  # return an explanation of the validity of the move
+  def query_move(color, from, to)
+
+    if Board.on_board?(from) == false || Board.on_board?(to) == false
+      return "Move Error: position not on board"
+    end
+    if self[from].nil?
+      return "Move Error: board space is empty"
+    end
+    if self[from].color != color
+      return "Move Error: selected piece is not correct color"
+    end
+    if self[from].valid_moves.include?(to) == false
+      return "Move Error: move would result in check" if self[from].move_make_check?(to)
+      return "Move Error: you are currently in check" if self.in_check?(color)
+      return "Move Error: selected move is invalid"
+    end
+
+    return "valid"
+  end
+
+  # prints the board state to the terminal
+  def print_data
+    
     column_labels = %w[a b c d e f g h]
     7.downto(-1) do |y| # each column
       -1.upto(7) do |x| # each row
@@ -102,7 +159,8 @@ class Board
           next
         end
 
-        pos = [x, y] # print piece symbols
+        # print piece symbols
+        pos = [x, y]
         if self[pos].nil?
           print "- "
         else
@@ -113,25 +171,21 @@ class Board
     end
   end
 
+  # returns a copy of this board
   def copy_board
-    copy = Board.new(false)
 
+    copy = Board.new(false)
     (0..7).each do |row_index|
       (0..7).each do |col_index|
+
         pos = [row_index, col_index]
-        next if self[pos].nil?
-
         piece = self[pos]
-        color = piece.color
-        dup_piece = piece.class.new(copy, pos, color)
+        next if piece.nil?
 
-        copy[pos] = dup_piece
+        copy[pos] = piece.class.new(copy, pos, piece.color)
       end
     end
+
     copy
   end
 end
-
-board = Board.new
-#board.load_FEM("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
-#board.print_board
