@@ -1,10 +1,11 @@
 require_relative 'pieces'
+require_relative 'utils'
 
 class Board
   attr_reader :data
-  def initialize(set = true)
+  def initialize(setup = true)
     @data = Array.new(8) { Array.new(8) }
-    reset if set
+    set_data(StartState) if setup
   end
 
   # get and set data
@@ -36,17 +37,15 @@ class Board
     end
   end
 
-  # reset the board to the initial state
-  def reset
-    set_data("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR")
-  end
-
   # return true if the input color is in check
   def in_check?(color)
+    king = get_pieces(color, King)[0]
+    return false if king.nil?
+
     other_color = color == :white ? :black : :white
     enemy_pieces = get_pieces(other_color)
-    king_pos = get_pieces(color, King)[0].pos
-    enemy_pieces.any? { |piece| piece.moves.include?(king_pos) }
+    #king_pos = get_pieces(color, King)[0].pos
+    enemy_pieces.any? { |piece| piece.moves.include?(king.pos) }
   end
 
   # return true if the input color is in checkmate
@@ -62,6 +61,8 @@ class Board
     self.clear_data
     pieces = []
     x_index, y_index = 0, 7
+
+    # process each character in the first string
     input = input.split(' ')[0]
     input.split('').each do |char|
 
@@ -124,61 +125,63 @@ class Board
   # return an explanation of the validity of the move
   def query_move(color, from, to)
 
-    if Board.on_board?(from) == false || Board.on_board?(to) == false
-      return "Move Error: position not on board"
-    end
-    if self[from].nil?
-      return "Move Error: board space is empty"
-    end
-    if self[from].color != color
-      return "Move Error: selected piece is not correct color"
-    end
+    # check various error states; order is important here!
+    return "Error: selected position invalid" if Board.on_board?(from) == false
+    return "Error: board space is empty" if self[from].nil?
+    return "Error: selected piece belongs to opponent" if self[from].color != color
+    return 'Error: targeted position invalid' if Board.on_board?(to) == false
+    return "Error: piece cannot move to the space it currently occupies" if from == to
+    
     if self[from].valid_moves.include?(to) == false
-      return "Move Error: move would result in check" if self[from].move_make_check?(to)
-      return "Move Error: you are currently in check" if self.in_check?(color)
-      return "Move Error: selected move is invalid"
+      return "Error: move would result in check" if self[from].move_make_check?(to)
+      return "Error: you are currently in check" if self.in_check?(color)
+      return "Error: selected move cannot be performed"
     end
 
+    # if no error found, return valid
     return "valid"
   end
 
   # prints the board state to the terminal
   def print_data
     
-    column_labels = %w[a b c d e f g h]
-    7.downto(-1) do |y| # each column
-      -1.upto(7) do |x| # each row
+    # begin at [0, 7]
+    7.downto(-1) do |y|
+      -1.upto(7) do |x|
 
-        if x == -1 # print row numbers
+        # print row numbers
+        if x == -1
           print "#{y + 1} | " if y >= 0
           print "".ljust(3) if y < 0
           next
         end
-        if y == -1 # print column letters
-          print " " + column_labels[x].to_s if x >= 0
+        
+        # print column letters
+        if y == -1
+          print " " + %w[a b c d e f g h][x].to_s if x >= 0
           next
         end
 
         # print piece symbols
         pos = [x, y]
-        if self[pos].nil?
-          print "- "
-        else
-          print "#{self[pos].symbol} "
-        end
+        print self[pos].nil? ? "- " : "#{self[pos].symbol} "
       end
       print "\n"
     end
+    print "\n"
   end
 
   # returns a copy of this board
   def copy_board
 
+    # create an empty copy of the board
     copy = Board.new(false)
-    (0..7).each do |row_index|
-      (0..7).each do |col_index|
 
-        pos = [row_index, col_index]
+    # copy the data to the new board
+    (0..7).each do |x|
+      (0..7).each do |y|
+
+        pos = [x, y]
         piece = self[pos]
         next if piece.nil?
 
@@ -186,6 +189,6 @@ class Board
       end
     end
 
-    copy
+    return copy
   end
 end

@@ -1,3 +1,5 @@
+require 'colorize'
+
 class Piece
   attr_accessor :board, :pos, :color, :moves, :symbol
   def initialize(board, pos, color)
@@ -19,9 +21,9 @@ class Piece
 
   # return true if the input move will result in check for this piece color
   def move_make_check?(move_pos)
-    copy_board = board.copy_board # create a copy of the board
-    copy_board.move_piece(self.pos, move_pos) # move the piece to the input position
-    copy_board.in_check?(color) # return true if in check
+    copy_board = board.copy_board
+    copy_board.move_piece(self.pos, move_pos)
+    copy_board.in_check?(color)
   end
 
   # fill the move array with all valid moves in 
@@ -69,7 +71,7 @@ class Pawn < Piece
   attr_accessor :has_moved
   def initialize(board, pos, color)
     super
-    @symbol = color == :white ? "♟︎" : "♙"
+    @symbol = color == :white ? '♟︎'.white : '♙'.light_black.bold
     @has_moved = false
   end
   def pos=(pos)
@@ -103,7 +105,7 @@ end
 class Rook < Piece
   def initialize(board, pos, color)
     super
-    @symbol = color == :white ? "♜" : "♖"
+    @symbol = color == :white ? '♜'.white : '♖'.light_black.bold
   end
   def moves
     fill_slides([[-1, 0], [1, 0], [0, -1], [0, 1]])
@@ -112,7 +114,7 @@ end
 class Knight < Piece
   def initialize(board, pos, color)
     super
-    @symbol = color == :white ? "♞" : "♘"
+    @symbol = color == :white ? '♞'.white : '♘'.light_black.bold
   end
   def moves
     fill_steps([[-2, -1], [-2, 1], [-1, -2], [-1, 2], [1, -2], [1, 2], [2, -1], [2, 1]])
@@ -121,7 +123,7 @@ end
 class Bishop < Piece
   def initialize(board, pos, color)
     super
-    @symbol = color == :white ? "♝" : "♗"
+    @symbol = color == :white ? '♝'.white : '♗'.light_black.bold
   end
   def moves
     fill_slides([[-1, -1], [-1, 1], [1, -1], [1, 1]])
@@ -130,7 +132,7 @@ end
 class Queen < Piece
   def initialize(board, pos, color)
     super
-    @symbol = color == :white ? "♛" : "♕"
+    @symbol = color == :white ? '♛'.white : '♕'.light_black.bold
   end
   def moves
     fill_slides([[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]])
@@ -139,7 +141,7 @@ end
 class King < Piece
   def initialize(board, pos, color)
     super
-    @symbol = color == :white ? "♚" : "♔"
+    @symbol = color == :white ? '♚'.white : '♔'.light_black.bold
   end
   def moves
     fill_steps([[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]])
