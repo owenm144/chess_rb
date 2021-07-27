@@ -30,13 +30,6 @@ class Board
     end
   end
 
-  # clear the board
-  def clear_data
-    @data.each do |x|
-      x.clear
-    end
-  end
-
   # return true if the input color is in check
   def in_check?(color)
     king = get_pieces(color, King)[0]
@@ -57,12 +50,14 @@ class Board
   # set the board state data using an FEN string
   def set_data(input)
 
-    # clear existing data and process each character in the string
-    self.clear_data
-    pieces = []
-    x_index, y_index = 0, 7
+    # clear existing data
+    @data.each do |x|
+      x.clear
+    end
 
     # process each character in the first string
+    pieces = []
+    x_index, y_index = 0, 7
     input = input.split(' ')[0]
     input.split('').each do |char|
 
