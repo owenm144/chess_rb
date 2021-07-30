@@ -3,9 +3,9 @@ require_relative 'utils'
 
 class Board
   attr_reader :data
-  def initialize(setup = true)
+  def initialize(state = StartState)
     @data = Array.new(8) { Array.new(8) }
-    set_data(StartState) if setup
+    set_data(state)
   end
 
   # get and set data
@@ -170,7 +170,7 @@ class Board
   def copy_board
 
     # create an empty copy of the board
-    copy = Board.new(false)
+    copy = Board.new(EmptyState)
 
     # copy the data to the new board
     (0..7).each do |x|

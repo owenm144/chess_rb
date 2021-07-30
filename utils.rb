@@ -1,6 +1,8 @@
 StartState = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+CloseState = "8/8/rnbqkbnr/pppppppp/PPPPPPPP/RNBQKBNR/8/8 w KQkq - 0 1"
 CheckState = "7k/8/8/7R/8/8/8/8 w KQkq - 0 1"
 CheckmateState = "7k/8/6R1/7R/8/8/8/8 w KQkq - 0 1"
+EmptyState = "8/8/8/8/8/8/8/8 w KQkq - 0 1"
 
 # return a formatted string for a player color
 def format(color)
