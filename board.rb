@@ -140,26 +140,27 @@ class Board
   # prints the board state to the terminal
   def print_data
     
-    # begin at [0, 7]
-    7.downto(-1) do |y|
-      -1.upto(7) do |x|
+    # begin at top left corner
+    8.downto(-1) do |y|
+      -1.upto(8) do |x|
 
         # print row numbers
         if x == -1
-          print "#{y + 1} | " if y >= 0
-          print "".ljust(3) if y < 0
+          print (0..7).include?(y) ? "#{y + 1} | " : "".ljust(3)
+          next
+        elsif x == 8
+          print (0..7).include?(y) ? " | #{y + 1}" : "".ljust(3)
           next
         end
         
         # print column letters
-        if y == -1
-          print " " + %w[a b c d e f g h][x].to_s if x >= 0
+        if (0..7).include?(y) == false
+          print " " + %w[a b c d e f g h][x].to_s
           next
         end
 
-        # print piece symbols
-        pos = [x, y]
-        print self[pos].nil? ? "- " : "#{self[pos].symbol} "
+        # print piece symbol
+        print self[[x, y]].nil? ? "- " : "#{self[[x, y]].symbol} "
       end
       print "\n"
     end
