@@ -6,10 +6,8 @@ EmptyState = "8/8/8/8/8/8/8/8 w KQkq - 0 1"
 
 # return a formatted string for a player color
 def format(color)
-  string = color.to_s.capitalize
+  string = color.to_s.capitalize.bold
   string = color == :white ? string.white : string.light_black
-  string = string.bold if color == active_player
-  string
 end
 
 # convert input string to move

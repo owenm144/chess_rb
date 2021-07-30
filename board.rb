@@ -146,16 +146,16 @@ class Board
 
         # print row numbers
         if x == -1
-          print (0..7).include?(y) ? "#{y + 1} | " : "".ljust(3)
+          print (0..7).include?(y) ? "#{y + 1} | ".green.bold : "".ljust(3)
           next
         elsif x == 8
-          print (0..7).include?(y) ? " | #{y + 1}" : "".ljust(3)
+          print (0..7).include?(y) ? " | #{y + 1}".green.bold : "".ljust(3)
           next
         end
         
         # print column letters
         if (0..7).include?(y) == false
-          print " " + %w[a b c d e f g h][x].to_s
+          print " " + %w[a b c d e f g h][x].to_s.green.bold
           next
         end
 

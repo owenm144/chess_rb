@@ -63,6 +63,7 @@ class Game
           from, to, take = @history.pop
           @board.move_piece(to, from)          
           @board[to] = take
+          puts "#{format(inactive_player)} undoes last move, moves #{@board[from].class.to_s.bold} from #{index_to_an(to)} back to #{index_to_an(from)}", ""
           return
         end
       end
@@ -135,5 +136,5 @@ class Game
   end
 end
 
-game = Game.new(CloseState)
+game = Game.new
 game.play
