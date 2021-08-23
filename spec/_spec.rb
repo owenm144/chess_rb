@@ -15,4 +15,7 @@ describe Board do
 		expect(board.in_checkmate? :black).to be true
 	end
 
+	# test undo
+	# test 
+	end
 end

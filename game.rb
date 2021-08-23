@@ -22,15 +22,12 @@ class Game
 
   # begin a new game
   def play
-    puts "\nBegin Game!\n".green.bold
-    @board.print_data
+    puts "\nBegin Game!".green.bold
 
     # enter main loop
     while true
-
-      # take the current players turn and print the board state
-      take_turn
       @board.print_data
+      take_turn
 
       # increment halfmove and fullmove counters
       @halfmoves += 1
@@ -49,23 +46,16 @@ class Game
     while true do
 
       # request input from the player
-      print "#{"Enter".light_green.bold} #{format(active_player)}#{"'s Move:".light_green.bold} "
+      print "#{"Enter".green.bold} #{format(active_player)}#{"'s Move:".green.bold} "
       input = gets.chomp
       
       # handle quit and undo messages
       if input == "q"
         exit
       elsif input == "undo"
-        if @history.empty?
-          puts "No moves to undo"
-          next
-        else
-          from, to, take = @history.pop
-          @board.move_piece(to, from)          
-          @board[to] = take
-          puts "#{format(inactive_player)} undoes last move, moves #{@board[from].class.to_s.bold} from #{index_to_an(to)} back to #{index_to_an(from)}", ""
-          return
-        end
+        undo_move ? return : next
+      elsif input == "fen"
+        board.write_fen; next
       end
 
       # convert input string to move
@@ -73,8 +63,7 @@ class Game
       
       # output error message if input was too short
       if from == nil || to == nil
-        puts "Error: input not sufficient", ""
-        next
+        puts "#{"Error:".red.bold} input not sufficient", ""; next
       end
 
       # return move if valid, or output error message
@@ -82,17 +71,34 @@ class Game
       if validity == "valid"
         @history.push([from, to, board[to]])
         @board.move_piece(from, to)
-        puts "#{format(active_player)} moves #{@board[to].class.to_s.bold} from #{index_to_an(from)} to #{index_to_an(to)}", ""
+        puts "#{format(active_player)} moves #{@board[to].class.to_s.bold} from #{index_to_an(from)} to #{index_to_an(to)}"
+        print_check_state
         return
       else
-        puts validity
-        next
+        puts validity; next
       end
     end
+  end
 
-    # check if the other player is in check or checkmate
+  # undo the last move made this game
+  def undo_move
+    if @history.empty?
+      puts "No moves to undo", ""
+      return false
+    else
+      from, to, take = @history.pop
+      @board.move_piece(to, from)          
+      @board[to] = take
+      puts "#{format(inactive_player)} moves #{@board[from].class.to_s.bold} from #{index_to_an(to)} back to #{index_to_an(from)}"
+      print_check_state
+      return true
+    end
+  end
+
+  # print a message if the inactive player is in check or checkmate
+  def print_check_state
     if @board.in_check?(inactive_player)
-      state = @board.in_checkmate?(inactive_player) ? "checkmate!" : "check!"
+      state = @board.in_checkmate?(inactive_player) ? 'checkmate!' : 'check!'
       puts "#{format(inactive_player)} in #{state.red.bold}"
     end
   end
@@ -120,6 +126,10 @@ class Game
   # load a game state using FEN-notation
   def load_game_state(input)
 
+    if (File.exist?(input))
+      input = File.open(input).read
+    end
+
     # get the six fields of the FEN code
     fields = input.split(' ')
 
@@ -134,7 +144,14 @@ class Game
     @castling = fields[2]
 
   end
+
+  def save_game_state
+    file = File.new("save.txt", "w")
+    file.write(board.write_fen)
+    file.close
+  end
 end
 
 game = Game.new
+game.load_game_state("save.txt")
 game.play
